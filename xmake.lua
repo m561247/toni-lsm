@@ -13,7 +13,9 @@ end
 
 add_repositories("local-repo build")
 
-add_requires("gtest", "gmock")
+add_requires("gtest")
+-- 如果编译失败就注释下面这行
+add_requires("gmock") 
 add_requires("asio")
 add_requires("pybind11")
 add_requires("spdlog", { system = false })
@@ -113,8 +115,6 @@ target("lsm_shared")
               "src/redis_wrapper/*.cpp")
     add_packages("toml11", "spdlog")
     add_includedirs("include", {public = true})  -- 确保包含路径正确
-    set_targetdir("$(builddir)/lib")
-
     if is_plat("windows") then
         set_extension(".dll")
         add_defines("TINYLSM_EXPORTS")
@@ -233,7 +233,9 @@ target("test_wal")
     add_files("test/test_wal.cpp")
     add_deps("logger", "wal", "lsm")
     add_includedirs("include", {public = true})
-    add_packages("gtest", "gmock", "toml11", "spdlog")
+    add_packages("gtest", "toml11", "spdlog")
+    -- 如果编译失败就注释下面这行依赖
+    add_packages("gmock")
 
 target("test_wisckey")
     set_kind("binary")
@@ -251,15 +253,13 @@ target("example")
     add_deps("logger", "config", "utils", "iterator", "skiplist", 
              "memtable", "block", "sst", "wal", "lsm", "redis")
     add_includedirs("include")  -- 显式添加包含路径
-    set_targetdir("$(builddir)/bin")
 
 target("debug")
     set_kind("binary")
     add_files("example/debug.cpp")
-    add_deps("logger", "config", "utils", "iterator", "skiplist", 
+    add_deps("logger", "config", "utils", "iterator", "skiplist",
              "memtable", "block", "sst", "wal", "lsm", "redis")
     add_includedirs("include")  -- 显式添加包含路径
-    set_targetdir("$(builddir)/bin")
 
 target("server")
     set_kind("binary")
@@ -267,7 +267,6 @@ target("server")
     add_deps("redis")
     add_includedirs("include", {public = true})
     add_packages("asio")
-    set_targetdir("$(builddir)/bin")
 
 -- ============ Python 绑定 ============
 
@@ -279,7 +278,6 @@ if is_plat("windows") then
         add_packages("pybind11")
         add_deps("lsm")  -- Windows下使用原来的依赖
         add_includedirs("include", {public = true})
-        set_targetdir("$(builddir)/lib")
         set_filename("lsm_pybind.pyd")
         add_cxxflags("/LD")
 else
@@ -290,7 +288,6 @@ else
         add_packages("pybind11")
         add_deps("lsm_shared")  -- Unix下使用共享库依赖
         add_includedirs("include", {public = true})
-        set_targetdir("$(builddir)/lib")
         set_filename("lsm_pybind.so")
         add_ldflags("-Wl,-rpath,$ORIGIN")
         add_defines("TINYLSM_EXPORT=__attribute__((visibility(\"default\")))")
